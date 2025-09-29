@@ -39,8 +39,8 @@ def test_conv2d_forward(device):
 def test_numba_vec_add(device):
     if device != "cuda" or not torch.cuda.is_available():
         pytest.skip("Numba test only runs on CUDA")
-        devices = cuda.gpus
 
+    devices = cuda.gpus
     if len(devices) == 0:
         pytest.skip("Numba sees zero CUDA devices")
 
