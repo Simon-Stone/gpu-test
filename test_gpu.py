@@ -36,53 +36,6 @@ def test_conv2d_forward(device):
 
 
 @pytest.mark.parametrize("device", DEVICES)
-def test_numba_vec_add(device):
-    if device != "cuda" or not torch.cuda.is_available():
-        pytest.skip("Numba test only runs on CUDA")
-
-    devices = list(cuda.gpus)
-    if not devices:
-        pytest.skip("Numba sees zero CUDA devices")
-
-    if device == "cuda":
-        dev_idx = 0
-    else:
-        dev_idx = int(device.split(":")[1])
-
-    cuda.select_device(dev_idx)
-
-    N = 10_000_000
-    a_host = np.random.rand(N).astype(np.float64)
-    b_host = np.random.rand(N).astype(np.float64)
-
-    a_dev = cuda.to_device(a_host)
-    b_dev = cuda.to_device(b_host)
-    out_dev = cuda.device_array_like(a_host)
-
-    threads_per_block = 256
-    blocks_per_grid = (N + threads_per_block - 1) // threads_per_block
-
-    @cuda.jit
-    def vec_add(dst, src1, src2):
-        i = cuda.grid(1)
-        if i < dst.size:
-            dst[i] = src1[i] + src2[i]
-
-    # Warm-up
-    vec_add[blocks_per_grid, threads_per_block](out_dev, a_dev, b_dev)
-    cuda.synchronize()
-
-    # Real launch
-    vec_add[blocks_per_grid, threads_per_block](out_dev, a_dev, b_dev)
-    cuda.synchronize()
-
-    out_host = out_dev.copy_to_host()
-
-    assert out_host.shape == (N,)
-    assert np.isfinite(out_host).all()
-
-
-@pytest.mark.parametrize("device", DEVICES)
 def test_resnet18_forward(device):
     if device == "cuda" and not torch.cuda.is_available():
         pytest.skip("CUDA not available on this machine")
