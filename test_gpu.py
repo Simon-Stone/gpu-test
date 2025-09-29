@@ -9,9 +9,7 @@ import torchvision.transforms as T
 import whisper
 from PIL import Image
 
-import io
 import os
-import requests
 
 
 DEVICES = ["cpu", "mps", "cuda"]
@@ -84,8 +82,7 @@ def test_resnet18_forward(device):
     model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT).to(device)
     model.eval()
 
-    url = "https://github.com/pytorch/hub/raw/master/images/dog.jpg"
-    img = Image.open(io.BytesIO(requests.get(url).content)).convert("RGB")
+    img = Image.open("./dog.jpg").convert("RGB")
     transform = T.Compose(
         [
             T.Resize(256),
