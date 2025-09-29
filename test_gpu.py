@@ -9,8 +9,10 @@ import torchvision.transforms as T
 import whisper
 from PIL import Image
 
-import requests
 import io
+import os
+import requests
+
 
 DEVICES = ["cpu", "mps", "cuda"]
 
@@ -175,7 +177,9 @@ def test_whisper(device):
     if device == "mps" and not torch.backends.mps.is_available():
         pytest.skip("MPS not available on this machine")
 
-    model = whisper.load_model("tiny", device=device)
+    model = whisper.load_model(
+        "tiny", device=device, download_root=os.environ.get("WHISPER_HOME", None)
+    )
     result = model.transcribe("test.wav")
 
     assert result is not None
