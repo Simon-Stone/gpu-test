@@ -1,6 +1,7 @@
 import pytest
 
 from diffusers import StableDiffusionPipeline
+import numpy as np
 from numba import cuda
 from sentence_transformers import SentenceTransformer
 import torch
@@ -38,15 +39,19 @@ def test_conv2d_forward(device):
 def test_numba_vec_add(device):
     if device != "cuda" or not torch.cuda.is_available():
         pytest.skip("Numba test only runs on CUDA")
+        devices = cuda.gpus
 
-    import numpy as np
+    if len(devices) == 0:
+        pytest.skip("Numba sees zero CUDA devices")
+
+    numba_device = devices[0]
 
     N = 10_000_000
     a_host = np.random.rand(N).astype(np.float64)
     b_host = np.random.rand(N).astype(np.float64)
 
-    a_dev = cuda.to_device(a_host)
-    b_dev = cuda.to_device(b_host)
+    a_dev = cuda.to_device(a_host, to=numba_device)
+    b_dev = cuda.to_device(b_host, to=numba_device)
     out_dev = cuda.device_array_like(a_host)
 
     threads_per_block = 256
