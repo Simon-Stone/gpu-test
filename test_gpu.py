@@ -40,18 +40,23 @@ def test_numba_vec_add(device):
     if device != "cuda" or not torch.cuda.is_available():
         pytest.skip("Numba test only runs on CUDA")
 
-    devices = cuda.gpus
-    if len(devices) == 0:
+    devices = list(cuda.gpus)
+    if not devices:
         pytest.skip("Numba sees zero CUDA devices")
 
-    numba_device = devices[0]
+    if device == "cuda":
+        dev_idx = 0
+    else:
+        dev_idx = int(device.split(":")[1])
+
+    cuda.select_device(dev_idx)
 
     N = 10_000_000
     a_host = np.random.rand(N).astype(np.float64)
     b_host = np.random.rand(N).astype(np.float64)
 
-    a_dev = cuda.to_device(a_host, to=numba_device)
-    b_dev = cuda.to_device(b_host, to=numba_device)
+    a_dev = cuda.to_device(a_host)
+    b_dev = cuda.to_device(b_host)
     out_dev = cuda.device_array_like(a_host)
 
     threads_per_block = 256
@@ -63,7 +68,7 @@ def test_numba_vec_add(device):
         if i < dst.size:
             dst[i] = src1[i] + src2[i]
 
-    # Warm‑up launch
+    # Warm-up
     vec_add[blocks_per_grid, threads_per_block](out_dev, a_dev, b_dev)
     cuda.synchronize()
 
