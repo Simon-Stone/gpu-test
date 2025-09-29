@@ -147,7 +147,7 @@ def test_stable_diffusion_one_step(device):
     image = pipe(
         prompt,
         generator=generator,
-        num_inference_steps=5,
+        num_inference_steps=1,
     ).images[0]
 
     assert isinstance(image, Image.Image)
